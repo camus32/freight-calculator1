@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中锐散货运输费用计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a5276 0%, #2e86ab 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 25px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        select, input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #2e86ab;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        .naked-dims {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .naked-dims.show {
+            display: block;
+        }
+        .dim-row {
+            display: flex;
+            gap: 10px;
+        }
+        .dim-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .btn-calc {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .btn-calc:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+        }
+        .result-box {
+            margin-top: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            display: none;
+        }
+        .result-box.show {
+            display: block;
+        }
+        .result-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a5276;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ddd;
+            font-size: 14px;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-item .label {
+            color: #666;
+        }
+        .result-item .value {
+            color: #333;
+            font-weight: 500;
+        }
+        .result-item.total {
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #1a5276;
+            border-bottom: none;
+        }
+        .result-item.total .label,
+        .result-item.total .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #c0392b;
+        }
+        .notes {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3e0;
+            border-radius: 8px;
+            border-left: 4px solid #ff9800;
+        }
+        .notes h3 {
+            font-size: 14px;
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+        .notes p {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>中锐散货运输费用计算器</h1>
+        </div>
+        <div class="content">
+            <div class="form-group">
+                <label>运输方式</label>
+                <select id="transportType" onchange="updateOptions()">
+                    <option value="rail">铁路拼箱</option>
+                    <option value="truck">汽运拼车</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>目的地</label>
+                <select id="destination">
+                    <option value="tashkent">塔什干</option>
+                    <option value="almaty">阿拉木图</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>发车站</label>
+                <select id="departure">
+                    <option value="tongshan">铜山站</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>货物类型</label>
+                <select id="cargoType">
+                    <option value="pallet">托盘/设备/木箱</option>
+                    <option value="carton">纸箱货</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>货物体积（立方米）</label>
+                <input type="number" id="volume" value="1" step="0.001" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>货物重量（公斤）</label>
+                <input type="number" id="weight" value="0" step="1" min="0">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="nakedCargo" onchange="toggleNakedDims()">
+                <label for="nakedCargo">裸装无法叠压货物</label>
+            </div>
+
+            <div class="naked-dims" id="nakedDims">
+                <div class="dim-row">
+                    <div class="form-group">
+                        <label>长（米）</label>
+                        <input type="number" id="length" value="1" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>宽（米）</label>
+                        <input type="number" id="width" value="1" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>高（米）</label>
+                        <input type="number" id="height" value="1" step="0.01" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>票数</label>
+                <input type="number" id="tickets" value="1" step="1" min="1">
+            </div>
+
+            <button class="btn-calc" onclick="calculate()">计算费用</button>
+
+            <div class="result-box" id="resultBox">
+                <div class="result-title">计算结果</div>
+                <div id="resultContent"></div>
+            </div>
+
+            <div class="notes">
+                <h3>计费说明</h3>
+                <p>
+                    • 铁路拼箱重抛比：1:500 | 汽运拼车重抛比：1:300<br>
+                    • 报转关费：500元/票<br>
+                    • 铁路裸装亏方系数：2.5 | 汽运裸装亏方系数：2.8<br>
+                    • 超重超大件货物装卸、特殊加固、查验费用另议
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateOptions() {
+            const transport = document.getElementById('transportType').value;
+            const destSelect = document.getElementById('destination');
+            const deptSelect = document.getElementById('departure');
+
+            if (transport === 'rail') {
+                destSelect.innerHTML = `
+                    <option value="tashkent">塔什干</option>
+                    <option value="almaty">阿拉木图</option>
+                `;
+                deptSelect.innerHTML = `<option value="tongshan">铜山站</option>`;
+            } else {
+                destSelect.innerHTML = `
+                    <option value="tashkent">塔什干</option>
+                    <option value="bishkek">比什凯克</option>
+                `;
+                deptSelect.innerHTML = `
+                    <option value="xuzhou">徐州</option>
+                    <option value="wuqia">乌恰</option>
+                    <option value="tuopa">托帕</option>
+                `;
+            }
+        }
+
+        function toggleNakedDims() {
+            const nakedDims = document.getElementById('nakedDims');
+            const isChecked = document.getElementById('nakedCargo').checked;
+            nakedDims.classList.toggle('show', isChecked);
+        }
+
+        function calculate() {
+            const transport = document.getElementById('transportType').value;
+            const destination = document.getElementById('destination').value;
+            const departure = document.getElementById('departure').value;
+            const cargoType = document.getElementById('cargoType').value;
+            let volume = parseFloat(document.getElementById('volume').value) || 0;
+            const weight = parseFloat(document.getElementById('weight').value) || 0;
+            const tickets = parseInt(document.getElementById('tickets').value) || 1;
+
+            // 裸装货物计算
+            const nakedFactor = transport === 'rail' ? 2.5 : 2.8;
+            if (document.getElementById('nakedCargo').checked) {
+                const length = parseFloat(document.getElementById('length').value) || 1;
+                const width = parseFloat(document.getElementById('width').value) || 1;
+                const height = parseFloat(document.getElementById('height').value) || 1;
+                volume = length * width * height * nakedFactor;
+            }
+
+            // 重抛比计算
+            const weightRatio = transport === 'rail' ? 500 : 300;
+            const weightVolume = weight / weightRatio;
+
+            // 取较大值
+            const chargeVolume = Math.max(volume, weightVolume);
+
+            // 获取单价
+            let pricePerCbm = 0;
+            if (transport === 'rail') {
+                if (destination === 'tashkent') {
+                    pricePerCbm = cargoType === 'pallet' ? 700 : 650;
+                } else {
+                    pricePerCbm = cargoType === 'pallet' ? 500 : 450;
+                }
+            } else {
+                // 汽运拼车价格表
+                if (destination === 'tashkent') {
+                    if (departure === 'xuzhou') {
+                        if (chargeVolume <= 10) pricePerCbm = cargoType === 'pallet' ? 550 : 450;
+                        else if (chargeVolume <= 20) pricePerCbm = cargoType === 'pallet' ? 500 : 450;
+                        else pricePerCbm = cargoType === 'pallet' ? 450 : 450;
+                    } else if (departure === 'wuqia') {
+                        if (chargeVolume <= 10) pricePerCbm = cargoType === 'pallet' ? 400 : 330;
+                        else if (chargeVolume <= 20) pricePerCbm = cargoType === 'pallet' ? 360 : 330;
+                        else pricePerCbm = cargoType === 'pallet' ? 330 : 330;
+                    }
+                } else { // bishkek
+                    if (departure === 'xuzhou') {
+                        if (chargeVolume <= 10) pricePerCbm = cargoType === 'pallet' ? 500 : 400;
+                        else if (chargeVolume <= 20) pricePerCbm = cargoType === 'pallet' ? 450 : 400;
+                        else pricePerCbm = cargoType === 'pallet' ? 400 : 400;
+                    } else if (departure === 'tuopa') {
+                        if (chargeVolume <= 10) pricePerCbm = cargoType === 'pallet' ? 260 : 200;
+                        else if (chargeVolume <= 20) pricePerCbm = cargoType === 'pallet' ? 230 : 200;
+                        else pricePerCbm = cargoType === 'pallet' ? 200 : 200;
+                    }
+                }
+            }
+
+            // 计算费用
+            const freightCost = chargeVolume * pricePerCbm;
+            const customsFee = 500 * tickets;
+            const totalCost = freightCost + customsFee;
+
+            // 显示结果
+            const transportName = transport === 'rail' ? '铁路拼箱' : '汽运拼车';
+            const destName = destination === 'tashkent' ? '塔什干' : (destination === 'almaty' ? '阿拉木图' : '比什凯克');
+            const deptName = {
+                'tongshan': '铜山站',
+                'xuzhou': '徐州',
+                'wuqia': '乌恰',
+                'tuopa': '托帕'
+            }[departure];
+            const cargoName = cargoType === 'pallet' ? '托盘/设备/木箱' : '纸箱货';
+
+            const resultHTML = `
+                <div class="result-item">
+                    <span class="label">运输方式</span>
+                    <span class="value">${transportName}</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">目的地</span>
+                    <span class="value">${destName}</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">发车站</span>
+                    <span class="value">${deptName}</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">货物类型</span>
+                    <span class="value">${cargoName}</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">货物体积</span>
+                    <span class="value">${volume.toFixed(3)} m³</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">货物重量</span>
+                    <span class="value">${weight.toFixed(0)} kg</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">重量体积 (重抛比1:${weightRatio})</span>
+                    <span class="value">${weightVolume.toFixed(3)} m³</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">计费体积</span>
+                    <span class="value">${chargeVolume.toFixed(3)} m³</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">运输单价</span>
+                    <span class="value">${pricePerCbm} 元/m³</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">运输费用</span>
+                    <span class="value">${freightCost.toFixed(2)} 元</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">报转关费 (${tickets}票 × 500元)</span>
+                    <span class="value">${customsFee} 元</span>
+                </div>
+                <div class="result-item total">
+                    <span class="label">总费用</span>
+                    <span class="value">${totalCost.toFixed(2)} 元</span>
+                </div>
+            `;
+
+            document.getElementById('resultContent').innerHTML = resultHTML;
+            document.getElementById('resultBox').classList.add('show');
+        }
+    </script>
+</body>
+</html>
